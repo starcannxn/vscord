@@ -10,6 +10,9 @@ let sessionStart: number = 0;
 let idleTimer: NodeJS.Timeout | null = null;
 const IDLE_THRESHOLD = 2 * 60 * 1000;
 
+let updateTimeout: NodeJS.Timeout | null = null;
+const UPDATE_DELAY = 500; // milliseconds
+
 const afkMessages = [
   "Wasting precious time",
   "Taking a dump",
@@ -42,7 +45,17 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Listen for active editor changes
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(updatePresence),
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+    // Clear previous pending update
+    if (updateTimeout) {
+      clearTimeout(updateTimeout);
+    }
+    
+    // Schedule new update after delay
+    updateTimeout = setTimeout(() => {
+      updatePresence(editor);
+    }, UPDATE_DELAY);
+  })
   );
 
   context.subscriptions.push(
@@ -76,6 +89,10 @@ export function deactivate() {
   if (idleTimer) {
     clearTimeout(idleTimer);
   }
+
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+  }
 }
 
 function setActivity(details: string, state: string) {
@@ -94,9 +111,8 @@ const idleMessages = [
   "Probably reading docs",
   "Configuring shit",
   "Pretending to work",
-  "Lost in the settings",
+  "Lost in the sauce",
   "Taking a break",
-  "Browsing extensions",
 ];
 
 function updatePresence(editor: vscode.TextEditor | undefined) {
