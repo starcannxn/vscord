@@ -7,6 +7,18 @@ const CLIENT_ID = "1479825936299065404";
 let rpcClient: RPC.Client | null = null;
 let sessionStart: number = 0;
 
+let idleTimer: NodeJS.Timeout | null = null;
+const IDLE_THRESHOLD = 2 * 60 * 1000;
+
+const afkMessages = [
+  "AFK",
+  "Taking a dump",
+  "Eating a large pizza",
+  "Gone fishing",
+  "Touching grass",
+  "Making coffee",
+];
+
 export function activate(context: vscode.ExtensionContext) {
   console.log("Raydar is now active");
 
@@ -28,6 +40,25 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(updatePresence),
   );
+
+  context.subscriptions.push(
+  vscode.window.onDidChangeWindowState((state) => {
+    if (!state.focused) {
+      // Lost focus - start idle timer
+      idleTimer = setTimeout(() => {
+        const randomAfk = afkMessages[Math.floor(Math.random() * afkMessages.length)];
+        setActivity(randomAfk, "Away from keyboard");
+      }, IDLE_THRESHOLD);
+    } else {
+      // Gained focus - cancel timer and restore presence
+      if (idleTimer) {
+        clearTimeout(idleTimer);
+        idleTimer = null;
+      }
+      updatePresence(vscode.window.activeTextEditor);
+    }
+  })
+);
 }
 
 export function deactivate() {
