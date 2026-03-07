@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 import * as RPC from 'discord-rpc';
 
-const CLIENT_ID = '1479825936299065404'; // Replace with your actual client ID
+const CLIENT_ID = '1479825936299065404';
 
 let rpcClient: RPC.Client | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
+	vscode.window.showInformationMessage('RAYDAR STARTING UP');
     console.log('Raydar is now active');
 
-    // Initialize Discord RPC
     rpcClient = new RPC.Client({ transport: 'ipc' });
 
     rpcClient.on('ready', () => {
@@ -16,7 +16,13 @@ export function activate(context: vscode.ExtensionContext) {
         setActivity('Just opened VSCode', 'Idle');
     });
 
-    rpcClient.login({ clientId: CLIENT_ID }).catch(console.error);
+    rpcClient.on('error', (error) => {
+        console.error('Discord RPC Error:', error);
+    });
+
+    rpcClient.login({ clientId: CLIENT_ID })
+        .then(() => console.log('Login successful'))
+        .catch((error) => console.error('Login failed:', error));
 }
 
 export function deactivate() {
@@ -26,7 +32,7 @@ export function deactivate() {
 }
 
 function setActivity(details: string, state: string) {
-    if (!rpcClient) return;
+    if (!rpcClient) {return;}
 
     rpcClient.setActivity({
         details: details,
