@@ -14,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   rpcClient.on("ready", () => {
     console.log("Connected to Discord");
-	sessionStart = Date.now(); // Set timestamp once
+    sessionStart = Date.now(); // Set timestamp once
     updatePresence(vscode.window.activeTextEditor);
   });
 
@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Listen for active editor changes
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(updatePresence)
+    vscode.window.onDidChangeActiveTextEditor(updatePresence),
   );
 }
 
@@ -37,7 +37,9 @@ export function deactivate() {
 }
 
 function setActivity(details: string, state: string) {
-  if (!rpcClient) return;
+  if (!rpcClient) {
+    return;
+  }
 
   rpcClient.setActivity({
     details,
@@ -46,20 +48,30 @@ function setActivity(details: string, state: string) {
   });
 }
 
+const idleMessages = [
+  "Probably reading docs",
+  "Configuring shit",
+  "Pretending to work",
+  "Lost in the settings",
+  "Taking a break",
+  "Browsing extensions",
+];
+
 function updatePresence(editor: vscode.TextEditor | undefined) {
   if (!editor) {
-    setActivity("Coding this bitch", "No file open");
+    // Pick random idle message
+    const randomMessage =
+      idleMessages[Math.floor(Math.random() * idleMessages.length)];
+    setActivity(randomMessage, "No file open");
     return;
   }
 
-  const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(
+    editor.document.uri,
+  );
   const workspaceName = workspaceFolder?.name;
-
   const fileName = path.basename(editor.document.fileName);
-
-  const state = workspaceName 
-    ? workspaceName
-    : "The Void";
+  const state = workspaceName ? workspaceName : "The Void";
 
   setActivity(`Working on: ${fileName}`, `In: ${state}`);
 }
