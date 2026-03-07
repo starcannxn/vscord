@@ -11,7 +11,7 @@ let idleTimer: NodeJS.Timeout | null = null;
 const IDLE_THRESHOLD = 2 * 60 * 1000;
 
 const afkMessages = [
-  "AFK",
+  "Wasting precious time",
   "Taking a dump",
   "Eating a large pizza",
   "Gone fishing",
@@ -27,6 +27,10 @@ export function activate(context: vscode.ExtensionContext) {
   rpcClient.on("ready", () => {
     console.log("Connected to Discord");
     sessionStart = Date.now(); // Set timestamp once
+
+    // Clear any stale presence from previous session
+    rpcClient?.clearActivity();
+
     updatePresence(vscode.window.activeTextEditor);
   });
 
@@ -42,28 +46,35 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-  vscode.window.onDidChangeWindowState((state) => {
-    if (!state.focused) {
-      // Lost focus - start idle timer
-      idleTimer = setTimeout(() => {
-        const randomAfk = afkMessages[Math.floor(Math.random() * afkMessages.length)];
-        setActivity(randomAfk, "Away from keyboard");
-      }, IDLE_THRESHOLD);
-    } else {
-      // Gained focus - cancel timer and restore presence
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-        idleTimer = null;
+    vscode.window.onDidChangeWindowState((state) => {
+      if (!state.focused) {
+        // Lost focus - start idle timer
+        idleTimer = setTimeout(() => {
+          const randomAfk =
+            afkMessages[Math.floor(Math.random() * afkMessages.length)];
+          setActivity(randomAfk, "Away from keyboard");
+        }, IDLE_THRESHOLD);
+      } else {
+        // Gained focus - cancel timer and restore presence
+        if (idleTimer) {
+          clearTimeout(idleTimer);
+          idleTimer = null;
+        }
+        updatePresence(vscode.window.activeTextEditor);
       }
-      updatePresence(vscode.window.activeTextEditor);
-    }
-  })
-);
+    }),
+  );
 }
 
 export function deactivate() {
   if (rpcClient) {
-    rpcClient.destroy();
+    rpcClient.clearActivity(); // Clear presence first
+    rpcClient.destroy(); // Then disconnect
+  }
+
+  // Also clear idle timer if running
+  if (idleTimer) {
+    clearTimeout(idleTimer);
   }
 }
 
