@@ -1,22 +1,34 @@
 {
-  "name": "vscord",
-  "displayName": "vscord",
-  "description": "Discord Rich Presence for VSCode (Extra Pog)",
+  "name": "vscord-rpc",
+  "displayName": "vscord-rpc",
+  "description": "Show your Visual Studio Code activity on Discord with Rich Presence",
   "version": "0.0.1",
   "publisher": "StarCannxn",
   "repository": {
     "type": "git",
     "url": "https://github.com/starcannxn/vscord"
   },
+  "homepage": "https://github.com/starcannxn/vscord",
+  "bugs": {
+    "url": "https://github.com/starcannxn/vscord/issues"
+  },
   "icon": "icon.png",
-  "keywords": ["discord", "presence", "rich presence", "status"],
+  "keywords": [
+    "discord",
+    "presence",
+    "rich presence",
+    "status"
+  ],
+  "license": "MIT",
   "engines": {
     "vscode": "^1.109.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": []
