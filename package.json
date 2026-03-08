@@ -1,6 +1,6 @@
 {
   "name": "vscord-rpc",
-  "displayName": "vscord-rpc",
+  "displayName": "VSCord",
   "description": "Show your Visual Studio Code activity on Discord with Rich Presence",
   "version": "0.9.0",
   "publisher": "StarCannxn",
