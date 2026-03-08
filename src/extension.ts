@@ -22,6 +22,35 @@ const afkMessages = [
   "Making coffee",
 ];
 
+const languageIcons: Record<string, string> = {
+  typescript: "typescript",
+  typescriptreact: "typescript",
+  javascript: "javascript",
+  javascriptreact: "react",
+  python: "python",
+  html: "html5",
+  css: "css",
+  scss: "sass",
+  sass: "sass",
+  json: "json",
+  jsonc: "json",
+  markdown: "markdown",
+  php: "php",
+  c: "c",
+  cpp: "cplusplus",
+  csharp: "csharp",
+  go: "go",
+  rust: "rust",
+  ruby: "ruby",
+  java: "java",
+  lua: "lua",
+  vue: "vuejs",
+  dart: "flutter",
+  "git-commit": "git",
+  "git-rebase": "git",
+  gitignore: "git",
+};
+
 export function activate(context: vscode.ExtensionContext) {
   console.log("VSCord is now active");
 
@@ -46,29 +75,27 @@ export function activate(context: vscode.ExtensionContext) {
   // Listen for active editor changes
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-    // Clear previous pending update
-    if (updateTimeout) {
-      clearTimeout(updateTimeout);
-    }
-    
-    // Schedule new update after delay
-    updateTimeout = setTimeout(() => {
-      updatePresence(editor);
-    }, UPDATE_DELAY);
-  })
+      // Clear previous pending update
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+      }
+
+      // Schedule new update after delay
+      updateTimeout = setTimeout(() => {
+        updatePresence(editor);
+      }, UPDATE_DELAY);
+    }),
   );
 
   context.subscriptions.push(
     vscode.window.onDidChangeWindowState((state) => {
       if (!state.focused) {
-        // Lost focus - start idle timer
         idleTimer = setTimeout(() => {
           const randomAfk =
             afkMessages[Math.floor(Math.random() * afkMessages.length)];
-          setActivity(randomAfk, "Away from keyboard");
+          setActivity(randomAfk, "Away from keyboard", "burrito");
         }, IDLE_THRESHOLD);
       } else {
-        // Gained focus - cancel timer and restore presence
         if (idleTimer) {
           clearTimeout(idleTimer);
           idleTimer = null;
@@ -95,7 +122,7 @@ export function deactivate() {
   }
 }
 
-function setActivity(details: string, state: string) {
+function setActivity(details: string, state: string, largeImageKey?: string) {
   if (!rpcClient) {
     return;
   }
@@ -104,6 +131,7 @@ function setActivity(details: string, state: string) {
     details,
     state,
     startTimestamp: sessionStart,
+    largeImageKey: largeImageKey || "vscode",
   });
 }
 
@@ -117,10 +145,9 @@ const idleMessages = [
 
 function updatePresence(editor: vscode.TextEditor | undefined) {
   if (!editor) {
-    // Pick random idle message
     const randomMessage =
       idleMessages[Math.floor(Math.random() * idleMessages.length)];
-    setActivity(randomMessage, "No file open");
+    setActivity(randomMessage, "No file open", "zany");
     return;
   }
 
@@ -131,5 +158,9 @@ function updatePresence(editor: vscode.TextEditor | undefined) {
   const fileName = path.basename(editor.document.fileName);
   const state = workspaceName ? workspaceName : "The Void";
 
-  setActivity(`Working on: ${fileName}`, `In: ${state}`);
+  // Get icon for current language
+  const languageId = editor.document.languageId;
+  const icon = languageIcons[languageId] || "vscode";
+
+  setActivity(`Working on: ${fileName}`, `In: ${state}`, icon);
 }
