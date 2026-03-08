@@ -54,8 +54,6 @@ const languageIcons: Record<string, string> = {
 };
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("VSCord is now active");
-
   // Create status bar item
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -110,7 +108,14 @@ export function activate(context: vscode.ExtensionContext) {
   );
 }
 
+let isConnecting = false;
+
 function connectToDiscord() {
+  if (isConnecting) {
+    return; // Prevent spam
+  }
+  isConnecting = true;
+
   if (rpcClient) {
     rpcClient.destroy();
   }
@@ -120,9 +125,13 @@ function connectToDiscord() {
   rpcClient = new RPC.Client({ transport: "ipc" });
 
   rpcClient.on("ready", () => {
-    console.log("Connected to Discord");
     statusBarItem.text = "$(check) VSCord: Connected";
-    sessionStart = Date.now();
+    isConnecting = false;
+
+    if (sessionStart === 0) {
+      sessionStart = Date.now();
+    }
+
     rpcClient?.clearActivity();
     updatePresence(vscode.window.activeTextEditor);
   });
@@ -130,11 +139,13 @@ function connectToDiscord() {
   rpcClient.on("error", (error) => {
     console.error("Discord RPC Error:", error);
     statusBarItem.text = "$(error) VSCord: Disconnected (click to retry)";
+    isConnecting = false;
   });
 
   rpcClient.login({ clientId: CLIENT_ID }).catch((error) => {
     console.error("Login failed:", error);
     statusBarItem.text = "$(error) VSCord: Disconnected (click to retry)";
+    isConnecting = false;
   });
 }
 
@@ -157,14 +168,19 @@ function setActivity(details: string, state: string, largeImageKey?: string) {
     return;
   }
 
-  rpcClient.setActivity({
-    details,
-    state,
-    startTimestamp: sessionStart,
-    largeImageKey: largeImageKey || "vscode",
-    smallImageKey: "code",
-    smallImageText: "Visual Studio Code",
-  });
+  try {
+    rpcClient.setActivity({
+      details,
+      state,
+      startTimestamp: sessionStart,
+      largeImageKey: largeImageKey || "vscode",
+      smallImageKey: "code",
+      smallImageText: "Visual Studio Code",
+    });
+  } catch (error) {
+    console.error("Failed to set activity:", error);
+    statusBarItem.text = "$(error) VSCord: Disconnected (click to retry)";
+  }
 }
 
 const idleMessages = [
