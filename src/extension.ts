@@ -132,6 +132,8 @@ function setActivity(details: string, state: string, largeImageKey?: string) {
     state,
     startTimestamp: sessionStart,
     largeImageKey: largeImageKey || "vscode",
+    smallImageKey: 'code',
+    smallImageText: 'Visual Studio Code',
   });
 }
 
