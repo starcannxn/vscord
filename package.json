@@ -3,6 +3,13 @@
   "displayName": "vscord",
   "description": "Discord Rich Presence for VSCode (Extra Pog)",
   "version": "0.0.1",
+  "publisher": "StarCannxn",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/starcannxn/vscord"
+  },
+  "icon": "icon.png",
+  "keywords": ["discord", "presence", "rich presence", "status"],
   "engines": {
     "vscode": "^1.109.0"
   },
