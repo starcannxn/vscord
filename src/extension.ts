@@ -23,7 +23,7 @@ const afkMessages = [
 ];
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("Raydar is now active");
+  console.log("VSCord is now active");
 
   rpcClient = new RPC.Client({ transport: "ipc" });
 

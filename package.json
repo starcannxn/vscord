@@ -1,6 +1,6 @@
 {
-  "name": "raydar",
-  "displayName": "raydar",
+  "name": "vscord",
+  "displayName": "vscord",
   "description": "Discord Rich Presence for VSCode (Extra Pog)",
   "version": "0.0.1",
   "engines": {
@@ -12,12 +12,7 @@
   "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "raydar.helloWorld",
-        "title": "Hello World"
-      }
-    ]
+    "commands": []
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
