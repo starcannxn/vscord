@@ -7,6 +7,8 @@ const CLIENT_ID = "1479825936299065404";
 let rpcClient: RPC.Client | null = null;
 let sessionStart: number = 0;
 
+let statusBarItem: vscode.StatusBarItem;
+
 let idleTimer: NodeJS.Timeout | null = null;
 const IDLE_THRESHOLD = 2 * 60 * 1000;
 
@@ -54,23 +56,25 @@ const languageIcons: Record<string, string> = {
 export function activate(context: vscode.ExtensionContext) {
   console.log("VSCord is now active");
 
-  rpcClient = new RPC.Client({ transport: "ipc" });
+  // Create status bar item
+  statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left,
+    100,
+  );
+  statusBarItem.command = "vscord.reconnect";
+  statusBarItem.text = "$(plug) VSCord: Connecting...";
+  statusBarItem.show();
+  context.subscriptions.push(statusBarItem);
 
-  rpcClient.on("ready", () => {
-    console.log("Connected to Discord");
-    sessionStart = Date.now(); // Set timestamp once
+  // Register reconnect command
+  context.subscriptions.push(
+    vscode.commands.registerCommand("vscord.reconnect", () => {
+      connectToDiscord();
+    }),
+  );
 
-    // Clear any stale presence from previous session
-    rpcClient?.clearActivity();
-
-    updatePresence(vscode.window.activeTextEditor);
-  });
-
-  rpcClient.on("error", (error) => {
-    console.error("Discord RPC Error:", error);
-  });
-
-  rpcClient.login({ clientId: CLIENT_ID }).catch(console.error);
+  // Initial connection
+  connectToDiscord();
 
   // Listen for active editor changes
   context.subscriptions.push(
@@ -106,20 +110,46 @@ export function activate(context: vscode.ExtensionContext) {
   );
 }
 
-export function deactivate() {
+function connectToDiscord() {
   if (rpcClient) {
-    rpcClient.clearActivity(); // Clear presence first
-    rpcClient.destroy(); // Then disconnect
+    rpcClient.destroy();
   }
 
-  // Also clear idle timer if running
-  if (idleTimer) {
-    clearTimeout(idleTimer);
-  }
+  statusBarItem.text = "$(sync~spin) VSCord: Connecting...";
 
+  rpcClient = new RPC.Client({ transport: "ipc" });
+
+  rpcClient.on("ready", () => {
+    console.log("Connected to Discord");
+    statusBarItem.text = "$(check) VSCord: Connected";
+    sessionStart = Date.now();
+    rpcClient?.clearActivity();
+    updatePresence(vscode.window.activeTextEditor);
+  });
+
+  rpcClient.on("error", (error) => {
+    console.error("Discord RPC Error:", error);
+    statusBarItem.text = "$(error) VSCord: Disconnected (click to retry)";
+  });
+
+  rpcClient.login({ clientId: CLIENT_ID }).catch((error) => {
+    console.error("Login failed:", error);
+    statusBarItem.text = "$(error) VSCord: Disconnected (click to retry)";
+  });
+}
+
+export function deactivate() {
   if (updateTimeout) {
     clearTimeout(updateTimeout);
   }
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+  }
+  if (rpcClient) {
+    rpcClient.clearActivity();
+    rpcClient.destroy();
+  }
+  statusBarItem.dispose();
 }
 
 function setActivity(details: string, state: string, largeImageKey?: string) {
@@ -132,8 +162,8 @@ function setActivity(details: string, state: string, largeImageKey?: string) {
     state,
     startTimestamp: sessionStart,
     largeImageKey: largeImageKey || "vscode",
-    smallImageKey: 'code',
-    smallImageText: 'Visual Studio Code',
+    smallImageKey: "code",
+    smallImageText: "Visual Studio Code",
   });
 }
 
